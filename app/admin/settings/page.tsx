@@ -11,6 +11,7 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmation, setConfirmation] = useState('')
+  const [publishModal, setPublishModal] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/settings').then(async (response) => {
@@ -35,13 +36,13 @@ export default function SettingsPage() {
   }
 
   async function publishResults() {
-    const typed = window.prompt('Type PUBLISH RESULTS to confirm publication.')
-    if (typed !== 'PUBLISH RESULTS') return
+    const typed = confirmation
+    if (typed !== 'PUBLISH RESULTS') { setMessage('Type PUBLISH RESULTS exactly to confirm.'); return }
     setSaving(true); setMessage('')
     const response = await fetch('/api/admin/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'publish', confirmation: typed }) })
     const data = await response.json(); setSaving(false)
     if (!response.ok) { setMessage(data.error ?? 'Unable to publish results.'); return }
-    setSettings(data.settings); setMessage('Results published successfully.')
+    setSettings(data.settings); setConfirmation(''); setPublishModal(false); setMessage('Results published successfully.')
   }
 
   async function unpublishResults() {
@@ -54,5 +55,5 @@ export default function SettingsPage() {
     setSettings(data.settings); setMessage('Results unpublished.')
   }
 
-  return <section className="admin-content"><p className="eyebrow">ELECTORAL COMMITTEE</p><h1>Settings</h1><div className="admin-panel"><form className="admin-form" onSubmit={save}><label>Portal mode<select value={mode} onChange={event => setMode(event.target.value as Mode)}><option value="LIVE">LIVE — real voting</option><option value="TEST">TEST — rehearsal mode</option></select></label><label>Type {mode} to confirm<input value={confirmation} onChange={event => setConfirmation(event.target.value)} placeholder={mode} autoComplete="off" /></label><p className="field-help">TEST mode is for rehearsals. LIVE mode is the production voter experience.</p><button className="primary-button" type="submit" disabled={saving}>{saving ? 'SAVING…' : 'SAVE SETTINGS'}</button></form><div className="admin-form publication-actions"><button className="primary-button" type="button" onClick={publishResults} disabled={saving || settings?.status !== 'CLOSED' || mode !== 'LIVE'}>PUBLISH RESULTS</button><button className="secondary-button" type="button" onClick={unpublishResults} disabled={saving || settings?.status !== 'RESULTS_PUBLISHED' || mode !== 'TEST'}>UNPUBLISH RESULTS</button></div>{message && <p className="admin-notice">{message}</p>}</div>{settings && <p className="muted-copy">Election status: {settings.status} · Last updated {new Date(settings.updated_at).toLocaleString()}</p>}</section>
+  return <section className="admin-content"><p className="eyebrow">ELECTORAL COMMITTEE</p><h1>Settings</h1><div className="admin-panel"><form className="admin-form" onSubmit={save}><label>Portal mode<select value={mode} onChange={event => setMode(event.target.value as Mode)}><option value="LIVE">LIVE — real voting</option><option value="TEST">TEST — rehearsal mode</option></select></label><label>Type {mode} to confirm<input value={confirmation} onChange={event => setConfirmation(event.target.value)} placeholder={mode} autoComplete="off" /></label><p className="field-help">TEST mode is for rehearsals. LIVE mode is the production voter experience.</p><button className="primary-button" type="submit" disabled={saving}>{saving ? 'SAVING…' : 'SAVE SETTINGS'}</button></form><div className="publication-section"><p className="eyebrow">RESULTS PUBLICATION</p><p>Current Status: <strong>{settings?.status === 'RESULTS_PUBLISHED' ? 'PUBLISHED' : 'NOT PUBLISHED'}</strong></p>{settings?.status === 'OPEN' && <p className="field-help">Voting must be closed before results can be published.</p>}<div className="admin-form publication-actions"><button className="primary-button" type="button" onClick={() => { setConfirmation(''); setPublishModal(true) }} disabled={saving || settings?.status !== 'CLOSED' || mode !== 'LIVE'}>PUBLISH ELECTION RESULTS</button><button className="secondary-button" type="button" onClick={unpublishResults} disabled={saving || settings?.status !== 'RESULTS_PUBLISHED' || mode !== 'TEST'}>UNPUBLISH RESULTS</button></div></div>{publishModal && <div className="modal-backdrop" role="presentation"><div className="admin-panel" role="dialog" aria-modal="true" aria-labelledby="publish-title"><p className="eyebrow">RESULTS PUBLICATION</p><h2 id="publish-title">Publish election results?</h2><p>Type PUBLISH RESULTS to confirm.</p><input value={confirmation} onChange={event => setConfirmation(event.target.value)} autoComplete="off" /><div className="row-actions"><button className="primary-button" type="button" onClick={publishResults} disabled={saving}>Confirm publication</button><button className="secondary-button" type="button" onClick={() => setPublishModal(false)}>Cancel</button></div></div></div>}{message && <p className="admin-notice">{message}</p>}</div>{settings && <p className="muted-copy">Election status: {settings.status} · Last updated {new Date(settings.updated_at).toLocaleString()}</p>}</section>
 }
