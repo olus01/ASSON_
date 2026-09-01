@@ -10,8 +10,8 @@ async function getAdmin() {
 }
 
 async function getStatus(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data } = await supabase.from('election_settings').select('status').eq('id', 1).maybeSingle()
-  return data?.status ?? 'OPEN'
+  const { data } = await supabase.from('election_settings').select('status, mode').eq('id', 1).maybeSingle()
+  return { status: data?.status ?? 'OPEN', mode: data?.mode ?? 'LIVE' }
 }
 
 export async function GET() {
@@ -23,14 +23,14 @@ export async function GET() {
     getStatus(ctx.supabase),
   ])
   if (error) return NextResponse.json({ error: 'Unable to load candidates.' }, { status: 500 })
-  return NextResponse.json({ candidates: candidates ?? [], positions: positions ?? [], status })
+  return NextResponse.json({ candidates: candidates ?? [], positions: positions ?? [], status: status.status, mode: status.mode })
 }
 
 async function save(request: Request, editing: boolean) {
   const ctx = await getAdmin()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const status = await getStatus(ctx.supabase)
-  if (!['DRAFT', 'SCHEDULED', 'UPCOMING'].includes(status)) return NextResponse.json({ error: 'Candidate management is locked while voting is active or concluded.' }, { status: 409 })
+  const election = await getStatus(ctx.supabase)
+  if (election.mode !== 'TEST' && !['DRAFT', 'SCHEDULED', 'UPCOMING'].includes(election.status)) return NextResponse.json({ error: 'Candidate management is locked while voting is active or concluded.' }, { status: 409 })
   const body = await request.json()
   const name = typeof body.name === 'string' ? body.name.trim().slice(0, 160) : ''
   const positionId = typeof body.positionId === 'string' ? body.positionId : ''
@@ -49,7 +49,8 @@ export async function PATCH(request: Request) { return save(request, true) }
 export async function DELETE(request: Request) {
   const ctx = await getAdmin()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['DRAFT', 'SCHEDULED', 'UPCOMING'].includes(await getStatus(ctx.supabase))) return NextResponse.json({ error: 'Candidate management is locked.' }, { status: 409 })
+  const election = await getStatus(ctx.supabase)
+  if (election.mode !== 'TEST' && !['DRAFT', 'SCHEDULED', 'UPCOMING'].includes(election.status)) return NextResponse.json({ error: 'Candidate management is locked.' }, { status: 409 })
   const { id } = await request.json()
   const { count } = await ctx.supabase.from('votes').select('id', { count: 'exact', head: true }).eq('candidate_id', id)
   if ((count ?? 0) > 0) return NextResponse.json({ error: 'This candidate has votes and cannot be deleted.' }, { status: 409 })

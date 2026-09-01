@@ -145,7 +145,11 @@ input::placeholder { color: #9aa9ad; }
 .success-screen .eyebrow { margin-top: 0; }
 .success-screen h1 { font-size: clamp(40px, 6vw, 62px); }
 .success-note { margin-top: 30px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted-foreground); font-size: 12px; line-height: 1.6; background: white; }
-@media (max-width: 760px) { .ballot-wrap { padding-top: 38px; } .ballot-top { align-items: flex-start; flex-direction: column; } .voter-chip { width: 100%; } .progress-row { align-items: stretch; flex-direction: column; gap: 9px; } .candidate-grid { grid-template-columns: 1fr; } .position-card, .review-card { padding: 17px; } .ballot-actions { flex-direction: column-reverse; } .ballot-actions button { width: 100%; } }
+
+.results-shell{width:min(980px,calc(100% - 40px));margin:auto;padding:60px 0;color:var(--navy)}.results-shell h1{font-size:clamp(40px,6vw,62px);margin:8px 0}.results-summary{color:var(--muted-foreground)}.results-section{margin-top:42px}.results-section h2{border-bottom:1px solid var(--border);padding-bottom:12px}.results-grid{display:grid;gap:12px}.result-card{display:flex;align-items:center;gap:14px;position:relative;border:1px solid var(--border);border-radius:8px;padding:14px;background:white}.result-card img,.result-card .candidate-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover}.result-card h3,.result-card p{margin:0 0 4px}.result-card p{color:var(--muted-foreground);font-size:12px}.result-card strong{font-size:12px}.result-badge{margin-left:auto;color:var(--primary);font-size:11px;font-weight:700;letter-spacing:.08em}.results-link{display:inline-block;margin-top:14px;text-decoration:none}
+
+@media (max-width: 760px) {
+  .ballot-wrap { padding-top: 38px; } .ballot-top { align-items: flex-start; flex-direction: column; } .voter-chip { width: 100%; } .progress-row { align-items: stretch; flex-direction: column; gap: 9px; } .candidate-grid { grid-template-columns: 1fr; } .position-card, .review-card { padding: 17px; } .ballot-actions { flex-direction: column-reverse; } .ballot-actions button { width: 100%; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 

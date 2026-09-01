@@ -21,6 +21,8 @@ export default function SettingsPage() {
 
   async function save(event: React.FormEvent) {
     event.preventDefault()
+    const confirmation = window.prompt(`Type ${mode} to confirm this portal mode change.`)
+    if (confirmation !== mode) { setMessage(`Type ${mode} exactly to confirm.`); return }
     setSaving(true)
     setMessage('')
     const response = await fetch('/api/admin/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) })
