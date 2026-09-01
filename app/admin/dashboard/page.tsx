@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 
 type DashboardData = { status: string; title: string; electionDate: string; registered: number; voted: number; positions: number; activity: { id: string; action: string; entity_type: string; created_at: string }[] }
 
-const emptyData: DashboardData = { status: 'OPEN', title: '2025 / 2026 ASSON elections', electionDate: 'Election date not configured', registered: 0, voted: 0, positions: 0, activity: [] }
+const emptyData: DashboardData = { status: 'OPEN', title: '2026 / 2027 ASSON elections', electionDate: 'Election date not configured', registered: 0, voted: 0, positions: 0, activity: [] }
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData>(emptyData)
@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
       const voterRows = voters.data ?? []
       setData({
         status: settings.data?.status ?? 'OPEN',
-        title: '2025 / 2026 ASSON elections',
+        title: '2026 / 2027 ASSON elections',
         electionDate: 'Election date not configured',
         registered: voterRows.length,
         voted: voterRows.filter((v) => v.has_voted).length || votes.data?.length || 0,

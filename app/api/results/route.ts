@@ -8,7 +8,7 @@ export async function GET() {
     supabase.from('voters').select('id', { count: 'exact', head: true }).eq('is_active', true),
     supabase.from('voters').select('id', { count: 'exact', head: true }).eq('is_active', true).eq('has_voted', true),
   ])
-  if (settings?.status !== 'RESULTS_PUBLISHED') return NextResponse.json({ available: false, status: settings?.status ?? 'OPEN', mode: settings?.mode ?? 'LIVE' })
+  if (settings?.status !== 'RESULTS_PUBLISHED') return NextResponse.json({ available: false, status: settings?.status ?? 'OPEN', mode: settings?.mode ?? 'LIVE', message: settings?.status === 'CLOSED' ? 'Voting has ended. Official results are awaiting publication by the Electoral Committee.' : 'Results are not yet available.' })
   const [{ data: positions }, { data: candidates }, { data: votes }] = await Promise.all([
     supabase.from('positions').select('id,title,display_order').eq('is_active', true).order('display_order'),
     supabase.from('candidates').select('id,position_id,name,department,photo_url,display_order').eq('is_active', true).order('display_order'),
