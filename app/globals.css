@@ -78,7 +78,7 @@ input::placeholder { color: #9aa9ad; }
 .password-field input { padding-right: 58px; }
 .show-password { position: absolute; right: 12px; top: 11px; border: 0; background: transparent; color: var(--primary); font-size: 11px; font-weight: 700; cursor: pointer; }
 .sign-in-button { display: flex; align-items: center; justify-content: center; gap: 12px; border: 0; border-radius: 7px; background: var(--primary); color: white; padding: 14px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .2s, transform .2s; margin-top: 3px; }
-.sign-in-button:hover:not(:disabled) { background: var(--navy); transform: translateY(-1px); }
+.sign-in-button:hover:not(:disabled) { background: var(--navy); transform: translateY(-1px); }.front-results-button { display: flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 2px; }
 .sign-in-button:disabled { opacity: .7; cursor: wait; }
 .form-message { margin: 10px 0 0; border-radius: 7px; padding: 11px 12px; font-size: 12px; line-height: 1.5; }
 .form-message.error { color: #8f3d3d; background: #fff1f1; border: 1px solid #f0cccc; }
@@ -125,8 +125,13 @@ input::placeholder { color: #9aa9ad; }
 .position-card legend strong { display: block; color: var(--navy); font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
 .position-card legend small { display: block; color: var(--muted-foreground); font-size: 12px; margin-top: 4px; }
 .position-number { color: var(--primary); font-family: monospace; font-size: 12px; font-weight: 700; padding-top: 7px; }
-.candidate-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-.candidate-option { display: flex; align-items: flex-start; gap: 11px; border: 1px solid var(--border); border-radius: 8px; padding: 14px; cursor: pointer; transition: border-color .2s, background .2s; }
+  .candidate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+  .candidate-grid-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .candidate-option { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: start; gap: 10px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color .2s, background .2s; min-width: 0; }
+  .candidate-option .ballot-candidate-photo { display: block; width: 100%; height: 260px; grid-column: 1 / -1; grid-row: 1; object-fit: cover; object-position: center; border-radius: 6px; }
+  .candidate-option .candidate-avatar { width: 100%; height: 260px; display: grid; place-items: center; grid-column: 1 / -1; grid-row: 1; }
+  .candidate-option .radio-mark { grid-column: 1; grid-row: 2; margin-top: 2px; }
+  .candidate-option > span:last-child { grid-column: 2; grid-row: 2; min-width: 0; }
 .candidate-option:hover, .candidate-option.selected { border-color: var(--aqua); background: #f3fbfb; }
 .candidate-option input { position: absolute; opacity: 0; pointer-events: none; }
 .radio-mark { width: 17px; height: 17px; flex: none; border: 1px solid #abc2c7; border-radius: 50%; margin-top: 1px; }
@@ -149,7 +154,7 @@ input::placeholder { color: #9aa9ad; }
 .results-shell{width:min(980px,calc(100% - 40px));margin:auto;padding:60px 0;color:var(--navy)}.results-shell h1{font-size:clamp(40px,6vw,62px);margin:8px 0}.results-summary{color:var(--muted-foreground)}.results-section{margin-top:42px}.results-section h2{border-bottom:1px solid var(--border);padding-bottom:12px}.results-grid{display:grid;gap:12px}.result-card{display:flex;align-items:center;gap:14px;position:relative;border:1px solid var(--border);border-radius:8px;padding:14px;background:white}.result-card img,.result-card .candidate-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover}.result-card h3,.result-card p{margin:0 0 4px}.result-card p{color:var(--muted-foreground);font-size:12px}.result-card strong{font-size:12px}.result-badge{margin-left:auto;color:var(--primary);font-size:11px;font-weight:700;letter-spacing:.08em}.results-link{display:inline-block;margin-top:14px;text-decoration:none}
 
 @media (max-width: 760px) {
-  .ballot-wrap { padding-top: 38px; } .ballot-top { align-items: flex-start; flex-direction: column; } .voter-chip { width: 100%; } .progress-row { align-items: stretch; flex-direction: column; gap: 9px; } .candidate-grid { grid-template-columns: 1fr; } .position-card, .review-card { padding: 17px; } .ballot-actions { flex-direction: column-reverse; } .ballot-actions button { width: 100%; } }
+  .ballot-wrap { padding-top: 38px; } .ballot-top { align-items: flex-start; flex-direction: column; } .voter-chip { width: 100%; } .progress-row { align-items: stretch; flex-direction: column; gap: 9px; } .candidate-grid, .candidate-grid-three { grid-template-columns: 1fr; }.candidate-option .ballot-candidate-photo, .candidate-option .candidate-avatar { height: 180px; } .position-card, .review-card { padding: 17px; } .ballot-actions { flex-direction: column-reverse; } .ballot-actions button { width: 100%; } }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
 
