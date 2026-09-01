@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'ASSON Student Election Portal',
+  title: '2026 / 2027 ASSON Elections | Student Election Portal',
   description: 'Secure online voting for the Association of Statistics Students at FUTA.',
   generator: 'v0.app',
 }
