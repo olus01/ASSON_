@@ -1,3 +1,35 @@
 'use client'
-import { useEffect,useState } from 'react'
-export default function SettingsPage(){const [form,setForm]=useState<any>({});const [message,setMessage]=useState('');useEffect(()=>{fetch('/api/admin/settings').then(r=>r.json().then(d=>d.settings&&setForm(d.settings)))},[]);const update=(key:string,value:string)=>setForm((x:any)=>({...x,[key]:value}));async function save(e:React.FormEvent){e.preventDefault();const r=await fetch('/api/admin/settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)});const d=await r.json();setMessage(r.ok?'Settings saved.':d.error||'Could not save settings.');if(r.ok)setForm(d.settings)}return <section className="admin-content"><p className="eyebrow">ELECTORAL COMMITTEE</p><h1>Settings</h1><div className="admin-panel"><form className="admin-form" onSubmit={save}>{[['title','Election title'],['election_title','Election title'],['election_date','Election date'],['opening_time','Opening time'],['closing_time','Closing time'],['association_name','Association name'],['session_year','Election session/year'],['committee_name','Electoral committee name'],['mode','Test/Live mode']].map(([key,label])=>form[key]!==undefined&&<label key={key}>{label}<input value={form[key]||''} onChange={e=>update(key,e.target.value)} type={key.includes('date')?'date':key.includes('time')?'time':'text'}/></label>)}<button className="primary-button" type="submit">SAVE SETTINGS</button></form>{message&&<p className="admin-notice">{message}</p>}</div></section>}
+
+import { useEffect, useState } from 'react'
+
+type Mode = 'TEST' | 'LIVE'
+type Settings = { id: number; status: string; mode: Mode; updated_at: string }
+
+export default function SettingsPage() {
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [mode, setMode] = useState<Mode>('LIVE')
+  const [message, setMessage] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/settings').then(async (response) => {
+      const data = await response.json()
+      if (response.ok && data.settings) { setSettings(data.settings); setMode(data.settings.mode ?? 'LIVE') }
+      else setMessage(data.error ?? 'Unable to load settings.')
+    }).catch(() => setMessage('Unable to load settings.'))
+  }, [])
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault()
+    setSaving(true)
+    setMessage('')
+    const response = await fetch('/api/admin/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) })
+    const data = await response.json()
+    setSaving(false)
+    if (!response.ok) { setMessage(data.error ?? 'Unable to save settings.'); return }
+    setSettings(data.settings)
+    setMessage(`Portal mode changed to ${mode}.`)
+  }
+
+  return <section className="admin-content"><p className="eyebrow">ELECTORAL COMMITTEE</p><h1>Settings</h1><div className="admin-panel"><form className="admin-form" onSubmit={save}><label>Portal mode<select value={mode} onChange={event => setMode(event.target.value as Mode)}><option value="LIVE">LIVE — real voting</option><option value="TEST">TEST — rehearsal mode</option></select></label><p className="field-help">TEST mode is for rehearsals. LIVE mode is the production voter experience.</p><button className="primary-button" type="submit" disabled={saving}>{saving ? 'SAVING…' : 'SAVE SETTINGS'}</button></form>{message && <p className="admin-notice">{message}</p>}</div>{settings && <p className="muted-copy">Election status: {settings.status} · Last updated {new Date(settings.updated_at).toLocaleString()}</p>}</section>
+}

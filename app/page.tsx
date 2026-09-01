@@ -32,11 +32,11 @@ export default function Page() {
     if (!matric || !name) { setMessage('Enter your matriculation number and surname to continue.'); return }
     setIsChecking(true); const supabase = createClient()
     const [{ data: settings, error: settingsError }, { data: found, error: voterError }] = await Promise.all([
-      supabase.from('election_settings').select('status').eq('id', 1).maybeSingle(),
+      supabase.from('election_settings').select('status, mode').eq('id', 1).maybeSingle(),
       supabase.from('voters').select('id, matric_number, surname, level, has_voted').eq('matric_number', matric).eq('is_active', true).maybeSingle(),
     ])
     if (settingsError || voterError) { setIsChecking(false); setMessage('We could not verify your details. Please try again.'); return }
-    if (settings?.status !== 'OPEN') { setIsChecking(false); setMessage('Voting is currently unavailable. Please check back when the election opens.'); return }
+    if (settings?.mode !== 'LIVE' || settings?.status !== 'OPEN') { setIsChecking(false); setMessage(settings?.mode === 'TEST' ? 'The voter portal is in TEST mode. No production ballots are being accepted.' : 'Voting is currently unavailable. Please check back when the election opens.'); return }
     if (!found || found.surname.toUpperCase() !== name) { setIsChecking(false); setMessage('Invalid matriculation number or surname. Please check your details.'); return }
     if (found.has_voted) { setIsChecking(false); setMessage('Your vote has already been recorded.'); return }
     const { data: rawPositions, error: positionsError } = await supabase.from('positions').select('id, title, description, display_order, candidates(id, name, department, photo_url, display_order)').eq('is_active', true).order('display_order')
