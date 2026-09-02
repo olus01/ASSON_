@@ -1,14 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function getElectionResults(supabase: SupabaseClient) {
-  const [{ data: positions, error: positionsError }, { data: candidates, error: candidatesError }, { data: votes, error: votesError }] = await Promise.all([
+  const [{ data: positions, error: positionsError }, { data: candidates, error: candidatesError }, { data: votes, error: votesError }, { data: ballots, error: ballotsError }, { data: settings, error: settingsError }] = await Promise.all([
     supabase.from('positions').select('id,title,display_order').eq('is_active', true).order('display_order'),
     supabase.from('candidates').select('id,position_id,name,department,photo_url,display_order,is_active').eq('is_active', true).order('display_order'),
-    supabase.from('votes').select('candidate_id,position_id'),
+    supabase.from('votes').select('id,candidate_id,position_id'),
+    supabase.from('ballots').select('id'),
+    supabase.from('election_settings').select('id,status,mode').eq('id', 1).maybeSingle(),
   ])
   if (positionsError) throw positionsError
   if (candidatesError) throw candidatesError
   if (votesError) throw votesError
+  if (ballotsError) throw ballotsError
+  if (settingsError) throw settingsError
+  if (!settings) throw new Error('Election settings could not be loaded.')
+  void ballots
 
   const candidateTotals = new Map<string, number>()
   const positionTotals = new Map<string, number>()
