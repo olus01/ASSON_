@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 
 async function getAdmin() {
   const supabase = await createClient()
@@ -42,6 +43,10 @@ export async function PATCH(request: Request) {
   const { data, error } = await updateQuery.select('id,status,mode,updated_at').maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: body.action === 'publish' ? 'Results were not published because the election is no longer CLOSED in LIVE mode.' : 'Results were not unpublished because the election state changed.' }, { status: 409 })
-  await supabase.from('audit_logs').insert({ actor_id: user.id, action: body.action === 'publish' ? 'Results Published' : body.action === 'unpublish' ? 'Results unpublished' : 'Portal mode updated', entity_type: 'election_settings', entity_id: '1', details: { mode: data.mode, status: data.status } })
-  return NextResponse.json({ settings: data })
+  const service = createServiceClient()
+  const { data: fresh, error: freshError } = await service.from('election_settings').select('id,status,mode,updated_at').eq('id', 1).maybeSingle()
+  if (freshError || !fresh) return NextResponse.json({ error: freshError?.message ?? 'Could not verify the updated election status.' }, { status: 500 })
+  if (body.action === 'publish' && fresh.status !== 'RESULTS_PUBLISHED') return NextResponse.json({ error: `Publication verification failed. Current status is ${fresh.status}.` }, { status: 409 })
+  await supabase.from('audit_logs').insert({ actor_id: user.id, action: body.action === 'publish' ? 'Results Published' : body.action === 'unpublish' ? 'Results unpublished' : 'Portal mode updated', entity_type: 'election_settings', entity_id: '1', details: { mode: fresh.mode, status: fresh.status } })
+  return NextResponse.json({ settings: fresh })
 }
