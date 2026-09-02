@@ -36,8 +36,12 @@ export async function PATCH(request: Request) {
   if (body.mode === undefined && body.status === undefined) return NextResponse.json({ error: 'No settings change requested.' }, { status: 400 })
   if (body.mode !== undefined && body.mode !== 'TEST' && body.mode !== 'LIVE') return NextResponse.json({ error: 'Mode must be TEST or LIVE.' }, { status: 400 })
   const update = { ...(body.mode !== undefined ? { mode: body.mode } : {}), ...(body.status !== undefined ? { status: body.status } : {}), updated_at: new Date().toISOString() }
-  const { data, error } = await supabase.from('election_settings').update(update).eq('id', 1).select('id,status,mode,updated_at').single()
+  let updateQuery = supabase.from('election_settings').update(update).eq('id', 1)
+  if (body.action === 'publish') updateQuery = updateQuery.eq('status', 'CLOSED').eq('mode', 'LIVE')
+  if (body.action === 'unpublish') updateQuery = updateQuery.eq('status', 'RESULTS_PUBLISHED').eq('mode', 'TEST')
+  const { data, error } = await updateQuery.select('id,status,mode,updated_at').maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data) return NextResponse.json({ error: body.action === 'publish' ? 'Results were not published because the election is no longer CLOSED in LIVE mode.' : 'Results were not unpublished because the election state changed.' }, { status: 409 })
   await supabase.from('audit_logs').insert({ actor_id: user.id, action: body.action === 'publish' ? 'Results Published' : body.action === 'unpublish' ? 'Results unpublished' : 'Portal mode updated', entity_type: 'election_settings', entity_id: '1', details: { mode: data.mode, status: data.status } })
   return NextResponse.json({ settings: data })
 }
