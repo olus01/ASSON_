@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const links = [
@@ -14,19 +14,43 @@ const links = [
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [ready, setReady] = useState(false)
+  const [state, setState] = useState<'loading' | 'ready' | 'unauthorized' | 'error'>('loading')
   const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
 
-  useEffect(() => {
+  const checkAccess = useCallback(async () => {
+    if (pathname === '/admin') return
+    setState('loading')
+    setError('')
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.replace('/admin')
-      else { setEmail(data.user.email ?? ''); setReady(true) }
-    })
-  }, [router])
+    let timeout: ReturnType<typeof setTimeout> | undefined
+    try {
+      const auth = await Promise.race([
+        supabase.auth.getUser(),
+        new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Supabase authentication timed out.')), 10000) }),
+      ])
+      const user = auth.data.user
+      if (!user) { router.replace('/admin'); return }
+      const { data: profile, error: profileError } = await supabase.from('admin_profiles').select('user_id').eq('user_id', user.id).eq('is_active', true).maybeSingle()
+      if (profileError) throw profileError
+      if (!profile) { setState('unauthorized'); return }
+      setEmail(user.email ?? '')
+      setState('ready')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Supabase authentication failed.')
+      setState('error')
+    } finally {
+      if (timeout) clearTimeout(timeout)
+    }
+  }, [pathname, router])
+
+  useEffect(() => { void checkAccess() }, [checkAccess])
 
   async function signOut() { await createClient().auth.signOut(); router.replace('/admin') }
-  if (!ready) return <div className="admin-loading">Checking administrator access…</div>
+  if (pathname === '/admin') return children
+  if (state === 'loading') return <div className="admin-loading">Checking administrator access…</div>
+  if (state === 'error') return <main className="admin-auth-shell"><section className="admin-auth-card"><p className="eyebrow">CONTROL CENTRE</p><h1>Authentication error</h1><p className="form-message error" role="alert">{error}</p><button className="sign-in-button" type="button" onClick={() => void checkAccess()}>Retry</button><a className="back-link" href="/admin">Return to administrator sign in</a></section></main>
+  if (state === 'unauthorized') return <main className="admin-auth-shell"><section className="admin-auth-card"><p className="eyebrow">CONTROL CENTRE</p><h1>Unauthorized</h1><p className="admin-auth-copy">Your account does not have an active administrator profile.</p><button className="sign-in-button" type="button" onClick={signOut}>Sign out</button></section></main>
 
   return <div className="admin-shell">
     <aside className="admin-sidebar">
